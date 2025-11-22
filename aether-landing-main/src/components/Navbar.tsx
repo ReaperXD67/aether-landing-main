@@ -1,86 +1,115 @@
+import { useState, useEffect } from "react";
+import { Menu, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Monitor } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-
-const navLinks = [
-  { label: "Pricing", href: "#pricing" },
-  { label: "Enterprise", href: "#enterprise" },
-  { label: "Careers", href: "#careers" },
-  { label: "Blog", href: "#blog" },
-];
+import { Link, useLocation } from "react-router-dom";
 
 const Navbar = () => {
-  const [ctaVisible, setCtaVisible] = useState(false);
-  const [hidden, setHidden] = useState(false);
-  const lastScrollY = useRef(0);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => {
-      const current = window.scrollY;
-      setCtaVisible(current > 140);
+    const controlNavbar = () => {
+      if (typeof window !== "undefined") {
+        const currentScrollY = window.scrollY;
 
-      setHidden(current > 24);
+        // Hide if scrolling down AND not at the top
+        if (currentScrollY > lastScrollY && currentScrollY > 20) {
+          setIsVisible(false);
+        } else {
+          setIsVisible(true);
+        }
 
-      lastScrollY.current = current;
+        setLastScrollY(currentScrollY);
+      }
     };
 
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    window.addEventListener("scroll", controlNavbar);
+    return () => window.removeEventListener("scroll", controlNavbar);
+  }, [lastScrollY]);
+
+  // Always visible on non-index pages or if at top
+  const showNavbar = isVisible || location.pathname !== "/" || lastScrollY < 20;
 
   return (
-    <>
-      <div
-        className={`fixed top-0 left-0 right-0 z-40 bg-transparent transition-transform duration-500 ${
-          hidden ? "-translate-y-full" : "translate-y-0"
-        }`}
-      >
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-white/70 text-primary font-black text-lg flex items-center justify-center shadow-lg">
-                ⊕
-              </div>
-              <div>
-                <p className="text-xl font-semibold tracking-tight">Cluely</p>
-                <p className="text-xs text-muted-foreground uppercase tracking-[0.3em]">Meetings</p>
-              </div>
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${showNavbar ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+        } ${lastScrollY > 20 ? "bg-black/50 backdrop-blur-md border-b border-white/5" : "bg-transparent"}`}
+    >
+      <div className="container mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-[0_0_15px_rgba(0,255,255,0.5)] group-hover:shadow-[0_0_25px_rgba(0,255,255,0.8)] transition-all">
+              A
             </div>
+            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">
+              AetherAI
+            </span>
+          </Link>
 
-            <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-              {navLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="text-foreground/70 hover:text-foreground transition-colors"
-                >
-                  {link.label}
-                </a>
-              ))}
-              <span className="text-foreground/70">Shimmer</span>
-            </div>
-
-            <div className="hidden sm:flex items-center gap-3">
-              <Button variant="ghost" className="text-sm font-medium hover:bg-white/60 transition-colors">
-                Book a demo
-              </Button>
-            </div>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-8">
+            <Link to="/#features" className="text-sm font-medium text-white/70 hover:text-primary transition-colors relative group">
+              Features
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+            </Link>
+            <Link to="/pricing" className="text-sm font-medium text-white/70 hover:text-primary transition-colors relative group">
+              Pricing
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+            </Link>
+            <Link to="/contact" className="text-sm font-medium text-white/70 hover:text-primary transition-colors relative group">
+              Contact
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+            </Link>
+            <Button
+              variant="outline"
+              className="border-primary/50 text-primary hover:bg-primary/10 hover:text-primary hover:border-primary transition-all duration-300 shadow-[0_0_10px_rgba(0,255,255,0.1)] hover:shadow-[0_0_20px_rgba(0,255,255,0.3)]"
+            >
+              Get Started <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden text-white"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X /> : <Menu />}
+          </button>
         </div>
       </div>
 
-      <div
-        className={`fixed top-4 right-6 z-50 transition-all duration-500 ${
-          ctaVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-3 pointer-events-none"
-        }`}
-      >
-        <Button className="btn-crystal flex items-center gap-2 font-semibold px-5 py-2">
-          <Monitor className="w-4 h-4" />
-          Get for Windows
-        </Button>
-      </div>
-    </>
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden absolute top-full left-0 right-0 bg-black/95 backdrop-blur-xl border-b border-white/10 p-6 space-y-4 animate-in slide-in-from-top-5">
+          <Link
+            to="/#features"
+            className="block text-lg font-medium text-white/80 hover:text-primary"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Features
+          </Link>
+          <Link
+            to="/pricing"
+            className="block text-lg font-medium text-white/80 hover:text-primary"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Pricing
+          </Link>
+          <Link
+            to="/contact"
+            className="block text-lg font-medium text-white/80 hover:text-primary"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Contact
+          </Link>
+          <Button className="w-full bg-primary text-black font-bold">
+            Get Started
+          </Button>
+        </div>
+      )}
+    </nav>
   );
 };
 

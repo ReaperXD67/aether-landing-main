@@ -1,22 +1,41 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const conversation = [
-  { sender: "User", tone: "text-foreground/70", text: "Can you recap the action items from this call?" },
   {
-    sender: "Cluely",
-    tone: "text-white",
-    text: "Absolutely. 1) Send the pricing proposal. 2) Schedule the hardware walkthrough. 3) Share the benchmark deck with their ops lead.",
+    sender: "AI",
+    tone: "text-blue-100",
+    text: "Initializing system... Welcome to AetherAI.",
+    delay: 0.5
   },
-  { sender: "User", tone: "text-foreground/70", text: "Anything else I should mention before we wrap?" },
   {
-    sender: "Cluely",
-    tone: "text-white",
-    text: "Remind them we're already ingesting their requirements and confirm the next sync for Wednesday at 10am.",
+    sender: "AI",
+    tone: "text-blue-100",
+    text: "I can optimize your workflow with 99.9% efficiency.",
+    delay: 1.5
   },
+  {
+    sender: "AI",
+    tone: "text-cyan-300",
+    text: "Shall we begin the transformation?",
+    delay: 2.5,
+    highlight: true
+  }
 ];
 
-const TYPING_SPEED = 28;
-const MESSAGE_PAUSE = 1600;
+const TYPING_SPEED = 20;
+const MESSAGE_PAUSE = 2000;
+
+const FloatingBubble = ({ delay, children, className }: { delay: number; children: React.ReactNode; className?: string }) => (
+  <motion.div
+    initial={{ y: 20, opacity: 0, scale: 0.8 }}
+    animate={{ y: 0, opacity: 1, scale: 1 }}
+    transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
+    className={`absolute ${className}`}
+  >
+    {children}
+  </motion.div>
+);
 
 export const ChatbotAnimation = () => {
   const [index, setIndex] = useState(0);
@@ -39,6 +58,12 @@ export const ChatbotAnimation = () => {
             typingIntervalRef.current = null;
           }
           setIsTyping(false);
+
+          // Move to next message after delay
+          pauseTimeoutRef.current = window.setTimeout(() => {
+            setIndex((prev) => (prev + 1) % conversation.length);
+          }, MESSAGE_PAUSE) as unknown as number;
+
           return prev;
         }
         return activeMessage.text.slice(0, prev.length + 1);
@@ -46,16 +71,10 @@ export const ChatbotAnimation = () => {
     }, TYPING_SPEED);
 
     return () => {
-      if (typingIntervalRef.current) {
-        clearInterval(typingIntervalRef.current);
-        typingIntervalRef.current = null;
-      }
-      if (pauseTimeoutRef.current) {
-        clearTimeout(pauseTimeoutRef.current);
-        pauseTimeoutRef.current = null;
-      }
+      if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+      if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
     };
-  }, [activeMessage]);
+  }, [activeMessage.text]);
 
   useEffect(() => {
     if (!isTyping) {
@@ -64,84 +83,99 @@ export const ChatbotAnimation = () => {
       }, MESSAGE_PAUSE);
     }
     return () => {
-      if (pauseTimeoutRef.current) {
-        clearTimeout(pauseTimeoutRef.current);
-        pauseTimeoutRef.current = null;
-      }
+      if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
     };
   }, [isTyping]);
 
   return (
-    <div className="relative rounded-[40px] bg-gradient-to-br from-[#1d2a53] via-[#1b2442] to-[#0a1633] p-10 text-white overflow-hidden shadow-2xl border border-white/10 hero-glow w-full">
-      <div className="absolute -top-24 -right-12 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-8 w-24 h-24 bg-[#5c80ff]/40 rounded-3xl blur-2xl" />
-      <div className="relative space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.4em] text-white/60">Live assistant</p>
-            <p className="text-lg font-semibold">Cluely Holo Chat</p>
-          </div>
-          <div className="flex items-center gap-2 text-white/70 text-sm">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            300ms response
-          </div>
-        </div>
+    <div className="relative h-[500px] md:h-[600px] w-full flex items-center justify-center perspective-1000">
+      {/* Holographic Base Glow - Larger & Cooler */}
+      <div className="absolute bottom-0 w-full md:w-3/4 h-32 bg-primary/10 blur-[120px] rounded-full animate-pulse-slow"></div>
 
-        <div className="space-y-3">
-          <div className="text-sm font-semibold text-white/70">Transcript feed</div>
-          <div className="bg-white/5 rounded-2xl border border-white/10 p-4 space-y-4">
-            <div className="text-xs uppercase tracking-[0.3em] text-white/50">real-time transcript</div>
-            <div className="space-y-4">
-              <div className="flex gap-3 items-start">
-                <div className="w-8 h-8 rounded-2xl bg-white/10 flex items-center justify-center text-sm font-semibold">You</div>
-                <div className="text-sm text-white/80 leading-relaxed max-w-sm">
-                  “So just to recap—you need new cabinets and lighting...”
-                </div>
-              </div>
-              <div className="flex gap-3 items-start">
-                <div className="w-8 h-8 rounded-2xl bg-primary/20 flex items-center justify-center text-sm font-semibold">AI</div>
-                <div className="text-sm text-white/80 leading-relaxed max-w-sm">
-                  “I'll send a quote within the hour. Let's do a kickoff call next Wednesday.”
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Floating Elements - Responsive positioning */}
+      <FloatingBubble delay={0.2} className="-top-4 left-4 md:-top-12 md:left-10">
+        <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-md border border-white/10 flex items-center justify-center shadow-[0_0_30px_rgba(0,100,255,0.2)] animate-float">
+          <div className="w-6 h-6 md:w-10 md:h-10 rounded-full bg-blue-400/50 blur-md"></div>
         </div>
+      </FloatingBubble>
 
-        <div className="bg-white/10 rounded-3xl border border-white/20 p-5 space-y-4 floating">
-          <div className="flex items-center justify-between text-white/70 text-sm">
-            <span>Suggested reply</span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              Typing
-            </span>
-          </div>
-          <div className="rounded-2xl bg-black/20 p-4 border border-white/10 min-h-[140px]">
-            <div className={`text-xs uppercase tracking-[0.4em] mb-2 ${activeMessage.tone}`}>
-              {activeMessage.sender}
-            </div>
-            <p className={`text-base leading-relaxed ${activeMessage.tone}`}>{displayed}</p>
-            {isTyping && (
-              <div className="mt-3 flex gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-white/70 animate-bounce" />
-                <span className="w-1.5 h-1.5 rounded-full bg-white/50 animate-bounce delay-100" />
-                <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce delay-200" />
+      <FloatingBubble delay={0.5} className="top-20 right-4 md:top-10 md:right-10">
+        <div className="w-10 h-10 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-cyan-400/20 to-blue-400/20 backdrop-blur-md border border-white/10 flex items-center justify-center shadow-[0_0_30px_rgba(0,255,255,0.2)] animate-float" style={{ animationDelay: '1s' }}>
+          <div className="w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div>
+        </div>
+      </FloatingBubble>
+
+      {/* Main Interface Container - Much Larger */}
+      <motion.div
+        initial={{ y: 60, opacity: 0, rotateX: 10 }}
+        animate={{ y: 0, opacity: 1, rotateX: 0 }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+        className="relative z-10 w-full max-w-4xl px-4"
+      >
+        <div className={`
+          relative bg-black/60 backdrop-blur-2xl 
+          rounded-[2rem] p-6 md:p-10 shadow-[0_0_60px_rgba(0,0,0,0.6)] 
+          border border-white/10 overflow-hidden
+          ${activeMessage.highlight ? 'ring-1 ring-primary/50 shadow-[0_0_50px_rgba(0,255,255,0.15)]' : ''}
+        `}>
+          {/* Scanline Effect */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_50%,rgba(0,0,0,0.3)_50%)] bg-[length:100%_4px] pointer-events-none opacity-20"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-6">
+            <div className="flex items-center space-x-6">
+              <div className="relative">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg relative z-10">
+                  <span className="text-white font-bold text-2xl md:text-3xl">AI</span>
+                </div>
+                <div className="absolute -inset-2 bg-primary/40 rounded-2xl blur-lg animate-pulse"></div>
               </div>
-            )}
-          </div>
-          <div className="flex items-center justify-between">
-            <button className="text-xs uppercase tracking-[0.4em] text-white/60 hover:text-white transition">
-              Ask • ⌘⏎
-            </button>
-            <div className="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full text-sm">
-              What should I say?
+              <div>
+                <h3 className="font-bold text-white text-xl md:text-2xl tracking-wide">AetherAI <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full ml-2 border border-primary/30 align-middle">ONLINE</span></h3>
+                <p className="text-sm text-blue-200/60 font-mono mt-1">SYSTEM_READY // V.2.0.4</p>
+              </div>
             </div>
+            <div className="hidden md:flex space-x-2">
+              <div className="w-4 h-4 rounded-full bg-red-500/20 border border-red-500/50"></div>
+              <div className="w-4 h-4 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+              <div className="w-4 h-4 rounded-full bg-green-500/20 border border-green-500/50"></div>
+            </div>
+          </div>
+
+          {/* Message Area */}
+          <div className="min-h-[120px] md:min-h-[160px] relative z-20 flex items-center">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="w-full"
+              >
+                <div className="flex items-start space-x-4">
+                  <div className={`text-2xl md:text-4xl font-light leading-relaxed ${activeMessage.tone} drop-shadow-[0_0_15px_rgba(0,200,255,0.4)]`}>
+                    {displayed}
+                    <span className="inline-block w-3 h-8 md:h-10 bg-primary/80 ml-2 animate-pulse align-middle"></span>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Footer / Input Simulation */}
+          <div className="mt-8 md:mt-12 pt-6 border-t border-white/5 flex items-center justify-between opacity-60">
+            <div className="flex space-x-3">
+              <div className="h-3 w-24 bg-white/10 rounded-full"></div>
+              <div className="h-3 w-12 bg-white/10 rounded-full"></div>
+            </div>
+            <div className="text-xs font-mono text-primary/60">PROCESSING_REQUEST...</div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
 
 export default ChatbotAnimation;
-
